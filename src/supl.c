@@ -78,14 +78,14 @@ int EXPORT supl_ulp_encode(supl_ulp_t *pdu) {
   asn_enc_rval_t ret;
   int pdu_len;
 
-  ret = uper_encode_to_buffer(&asn_DEF_ULP_PDU, pdu->pdu, pdu->buffer, sizeof(pdu->buffer));
+  ret = uper_encode_to_buffer(&asn_DEF_ULP_PDU, NULL, pdu->pdu, pdu->buffer, sizeof(pdu->buffer));
   if (ret.encoded != -1) {
     memset(pdu->buffer, 0, sizeof(pdu->buffer));
 
     pdu_len = (ret.encoded + 7) >> 3;
     ((ULP_PDU_t *)pdu->pdu)->length = pdu_len;
 
-    ret = uper_encode_to_buffer(&asn_DEF_ULP_PDU, pdu->pdu, pdu->buffer, sizeof(pdu->buffer));
+    ret = uper_encode_to_buffer(&asn_DEF_ULP_PDU, NULL, pdu->pdu, pdu->buffer, sizeof(pdu->buffer));
     if (ret.encoded > 0) {
       int len = (ret.encoded + 7) >> 3;
 
@@ -100,7 +100,7 @@ int EXPORT supl_ulp_encode(supl_ulp_t *pdu) {
 }
 
 void EXPORT supl_ulp_free(supl_ulp_t *pdu) {
-  asn_DEF_ULP_PDU.free_struct(&asn_DEF_ULP_PDU, pdu->pdu, 0);
+  ASN_STRUCT_FREE(asn_DEF_ULP_PDU, pdu->pdu);
 }
 
 int EXPORT supl_ulp_send(supl_ctx_t *ctx, supl_ulp_t *pdu) {
@@ -163,7 +163,7 @@ int EXPORT supl_ulp_recv(supl_ctx_t *ctx, supl_ulp_t *pdu) {
     }
   }
 
-  asn_DEF_ULP_PDU.free_struct(&asn_DEF_ULP_PDU, length, 0);
+  ASN_STRUCT_FREE(asn_DEF_ULP_PDU, length);
 
   pdu->size = n;
 
@@ -214,12 +214,12 @@ int EXPORT supl_decode_rrlp(supl_ulp_t *ulp_pdu, PDU_t **ret_rrlp) {
     return 0;
 
   case RC_WMORE:
-    asn_DEF_PDU.free_struct(&asn_DEF_PDU, rrlp, 0);
+    ASN_STRUCT_FREE(asn_DEF_PDU, rrlp);
     ret_rrlp = 0;
     return E_SUPL_DECODE_RRLP;
 
   default:
-    asn_DEF_PDU.free_struct(&asn_DEF_PDU, rrlp, 0);
+    ASN_STRUCT_FREE(asn_DEF_PDU, rrlp);
     ret_rrlp = 0;
     return E_SUPL_DECODE_RRLP;
   }
@@ -354,7 +354,7 @@ static int pdu_make_ulp_start(supl_ctx_t *ctx, supl_ulp_t *pdu) {
 
   err = supl_ulp_encode(pdu);
   if (err < 0) {
-    asn_DEF_ULP_PDU.free_struct(&asn_DEF_ULP_PDU, ulp, 0);
+    ASN_STRUCT_FREE(asn_DEF_ULP_PDU, ulp);
     return err;
   }
 
@@ -469,7 +469,7 @@ static int pdu_make_ulp_pos_init(supl_ctx_t *ctx, supl_ulp_t *pdu) {
 
   err = supl_ulp_encode(pdu);
   if (err < 0) {
-    asn_DEF_ULP_PDU.free_struct(&asn_DEF_ULP_PDU, ulp, 0);
+    ASN_STRUCT_FREE(asn_DEF_ULP_PDU, ulp);
     return err;
   }
 
@@ -492,8 +492,8 @@ static int pdu_make_ulp_rrlp_ack(supl_ctx_t *ctx, supl_ulp_t *pdu, PDU_t *rrlp) 
   rrlp_ack->referenceNumber = rrlp->referenceNumber;
   rrlp_ack->component.present = RRLP_Component_PR_assistanceDataAck;
     
-  ret = uper_encode_to_buffer(&asn_DEF_PDU, rrlp_ack, buffer, sizeof(buffer));
-  asn_DEF_ULP_PDU.free_struct(&asn_DEF_PDU, rrlp_ack, 0);
+  ret = uper_encode_to_buffer(&asn_DEF_PDU, NULL, rrlp_ack, buffer, sizeof(buffer));
+  ASN_STRUCT_FREE(asn_DEF_PDU, rrlp_ack);
   if (ret.encoded == -1) {
     return E_SUPL_ENCODE_RRLP;
   }
@@ -862,7 +862,7 @@ int EXPORT supl_get_assist(supl_ctx_t *ctx, char *server, unsigned int port,
     supl_collect_rrlp(assist, rrlp, &t);
 
     if (!supl_more_rrlp(rrlp)) {
-      asn_DEF_ULP_PDU.free_struct(&asn_DEF_PDU, rrlp, 0);
+      ASN_STRUCT_FREE(asn_DEF_PDU, rrlp);
       break;
     }
 
@@ -873,7 +873,7 @@ int EXPORT supl_get_assist(supl_ctx_t *ctx, char *server, unsigned int port,
     }
 
     supl_ulp_send(ctx, &ulp);
-    asn_DEF_ULP_PDU.free_struct(&asn_DEF_PDU, rrlp, 0);
+    ASN_STRUCT_FREE(asn_DEF_PDU, rrlp);
   }
 
   supl_ulp_free(&ulp);

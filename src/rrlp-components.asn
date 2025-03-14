@@ -1499,4 +1499,7 @@ Rel7-AssistanceData-Extension ::= SEQUENCE {
 Ext-GeographicalInformation ::= OCTET STRING (SIZE (1..maxExt-GeographicalInformation))
 maxExt-GeographicalInformation  INTEGER ::= 20
 
+-- force asn1 to generate BOOLEAN.* sources
+UnusedXXX ::= BOOLEAN
+
 END
